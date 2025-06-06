@@ -21,14 +21,15 @@ const ChatPage: React.FC = () => {
   const [activeConversation, setActiveConversation] = useState<typeof mockConversations[0] | null>(null);
   const [otherUser, setOtherUser] = useState<typeof mockUsers[0] | null>(null);
   const [relatedTrip, setRelatedTrip] = useState<typeof mockTrips[0] | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Filter conversations for current user
+  const userConversations = mockConversations.filter(conv => 
+    conv.participants.includes(currentUser?.id || '')
+  );
+
   useEffect(() => {
-    // Filter conversations for current user
-    const userConversations = mockConversations.filter(conv => 
-      conv.participants.includes(currentUser?.id || '')
-    );
-    
     let selectedConversation;
     
     if (conversationId) {
@@ -109,10 +110,18 @@ const ChatPage: React.FC = () => {
     <div className="page-transition -mx-4 -my-6 flex h-[calc(100vh-4rem)] flex-col sm:-mx-6 lg:-mx-8">
       <div className="flex flex-1 overflow-hidden">
         {/* Conversations Sidebar */}
-        <div className="hidden w-80 flex-shrink-0 border-r border-gray-200 bg-white md:block">
+        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} absolute inset-0 z-50 bg-white md:relative md:block md:w-80 md:flex-shrink-0 md:border-r md:border-gray-200`}>
           <div className="h-full flex flex-col">
             <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold">Messages</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Messages</h2>
+                <button 
+                  className="md:hidden"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
               <div className="mt-2 relative">
                 <input
                   type="text"
@@ -124,9 +133,8 @@ const ChatPage: React.FC = () => {
             </div>
             
             <div className="flex-1 overflow-y-auto p-2">
-              {mockConversations
-                .filter(conv => conv.participants.includes(currentUser?.id || ''))
-                .map(conv => {
+              {userConversations.length > 0 ? (
+                userConversations.map(conv => {
                   const otherUserId = conv.participants.find(id => id !== currentUser?.id);
                   const otherUser = mockUsers.find(user => user.id === otherUserId);
                   const trip = mockTrips.find(trip => trip.id === conv.tripId);
@@ -138,11 +146,11 @@ const ChatPage: React.FC = () => {
                         activeConversation?.id === conv.id ? 'bg-primary-50' : ''
                       }`}
                       onClick={() => {
-                        // In a real app, this would navigate to the conversation
                         setActiveConversation(conv);
                         setOtherUser(otherUser);
                         setRelatedTrip(trip);
                         setMessages(mockMessages[conv.id as keyof typeof mockMessages] || []);
+                        setIsMobileMenuOpen(false);
                       }}
                     >
                       <img
@@ -168,7 +176,13 @@ const ChatPage: React.FC = () => {
                       </div>
                     </div>
                   ) : null;
-                })}
+                })
+              ) : (
+                <div className="p-4 text-center">
+                  <MessageSquare className="mx-auto mb-2 text-gray-300" size={32} />
+                  <p className="text-sm text-gray-500">Aucune conversation</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -180,6 +194,12 @@ const ChatPage: React.FC = () => {
               {/* Chat Header */}
               <div className="flex items-center justify-between border-b border-gray-200 bg-white p-4">
                 <div className="flex items-center">
+                  <button 
+                    className="mr-3 md:hidden"
+                    onClick={() => setIsMobileMenuOpen(true)}
+                  >
+                    ☰
+                  </button>
                   <img
                     src={otherUser.avatar}
                     alt={otherUser.name}
@@ -294,10 +314,21 @@ const ChatPage: React.FC = () => {
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center bg-gray-50 p-4">
               <div className="text-center">
+                <button 
+                  className="mb-4 md:hidden btn-primary"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  Voir les conversations
+                </button>
                 <MessageSquare className="mx-auto mb-4 text-gray-300" size={64} />
-                <h3 className="mb-2 text-xl font-semibold">Aucune conversation sélectionnée</h3>
+                <h3 className="mb-2 text-xl font-semibold">
+                  {userConversations.length === 0 ? 'Aucune conversation' : 'Sélectionnez une conversation'}
+                </h3>
                 <p className="mb-4 text-gray-600">
-                  Sélectionnez une conversation existante ou démarrez-en une nouvelle.
+                  {userConversations.length === 0 
+                    ? "Vous n'avez pas encore de conversation. Contactez un voyageur pour commencer!"
+                    : "Sélectionnez une conversation existante pour commencer à discuter."
+                  }
                 </p>
               </div>
             </div>
@@ -306,7 +337,7 @@ const ChatPage: React.FC = () => {
         
         {/* Trip Details Sidebar */}
         {activeConversation && relatedTrip && (
-          <div className="hidden w-80 flex-shrink-0 border-l border-gray-200 bg-white lg:block">
+          <div className="hidden w-80 flex-shrink-0 border-l border-gray-200 bg-white xl:block">
             <div className="p-4">
               <h3 className="mb-4 text-lg font-semibold">Détails du trajet</h3>
               

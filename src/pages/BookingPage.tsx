@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plane, Calendar, Package, MapPin, DollarSign, CreditCard, ChevronRight, ArrowLeft, Check, User, Lock, Edit, ShieldCheck } from 'lucide-react';
+import { Plane, Calendar, Package, MapPin, DollarSign, CreditCard, ChevronRight, ArrowLeft, Check, User, Lock, Edit, ShieldCheck, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { mockTrips, mockUsers } from '../data/mockData';
 import { format } from 'date-fns';
@@ -125,12 +125,12 @@ const BookingPage: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content */}
-        <div className="md:col-span-2">
+        <div className="lg:col-span-2">
           {/* Package details step */}
           {step === 'details' && (
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <h2 className="mb-4 text-xl font-semibold">Détails du colis</h2>
               
               <form onSubmit={handleDetailsSubmit}>
@@ -229,7 +229,7 @@ const BookingPage: React.FC = () => {
           
           {/* Payment step */}
           {step === 'payment' && (
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <h2 className="mb-4 text-xl font-semibold">Paiement</h2>
               
               <form onSubmit={handlePaymentSubmit}>
@@ -352,7 +352,7 @@ const BookingPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-between">
                   <button
                     type="button"
                     className="btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
@@ -363,13 +363,13 @@ const BookingPage: React.FC = () => {
                   
                   <button
                     type="submit"
-                    className="btn-primary flex items-center gap-2"
+                    className="btn-primary flex items-center justify-center gap-2"
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
                       <>
-                        <svg className="h-4 w-4 animate-spin\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                          <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                        <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         Traitement en cours...
@@ -388,7 +388,7 @@ const BookingPage: React.FC = () => {
           
           {/* Confirmation step */}
           {step === 'confirmation' && (
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <div className="mb-6 flex flex-col items-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                   <Check size={32} className="text-green-500" />
@@ -462,8 +462,8 @@ const BookingPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="mt-6 flex justify-between">
-                <Link to="/chat" className="btn-outline flex items-center gap-2">
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-between">
+                <Link to="/chat" className="btn-outline flex items-center justify-center gap-2">
                   <MessageSquare size={16} />
                   Contacter le transporteur
                 </Link>
@@ -477,9 +477,9 @@ const BookingPage: React.FC = () => {
         </div>
         
         {/* Sidebar */}
-        <div className="md:col-span-1">
+        <div className="lg:col-span-1">
           <div className="sticky top-6">
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <h3 className="mb-4 text-lg font-semibold">Résumé</h3>
               
               <div className="mb-4 flex items-center gap-3">
@@ -498,8 +498,8 @@ const BookingPage: React.FC = () => {
                         <Star 
                           key={i} 
                           size={12} 
-                          fill={i < Math.floor(traveler.rating) ? 'currentColor' : 'none'} 
-                          className={i < Math.floor(traveler.rating) ? 'text-yellow-500' : 'text-gray-300'} 
+                          fill={i < Math.floor(traveler.rating || 0) ? 'currentColor' : 'none'} 
+                          className={i < Math.floor(traveler.rating || 0) ? 'text-yellow-500' : 'text-gray-300'} 
                         />
                       ))}
                     </div>

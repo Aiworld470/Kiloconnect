@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plane, Package, MessageSquare, Calendar, ChevronRight, Plus, MapPin, Clock, DollarSign, Check } from 'lucide-react';
+import { Plane, Package, MessageSquare, Calendar, ChevronRight, Plus, MapPin, Clock, DollarSign, Check, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { mockTrips, mockBookings, mockConversations, mockUsers } from '../data/mockData';
 import { format } from 'date-fns';
@@ -15,6 +15,11 @@ const DashboardPage: React.FC = () => {
   const userConversations = mockConversations.filter(conv => 
     conv.participants.includes(currentUser?.id || '')
   );
+  
+  // Calculate total weight transported
+  const totalWeightTransported = userBookings
+    .filter(booking => booking.status === 'delivered')
+    .reduce((total, booking) => total + booking.packageWeight, 0);
   
   return (
     <div className="page-transition">
@@ -32,12 +37,40 @@ const DashboardPage: React.FC = () => {
       {/* Stats */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: "Mes trajets", value: userTrips.length, icon: <Plane className="text-secondary-500" />, color: "bg-secondary-50" },
-          { title: "Mes réservations", value: userBookings.length, icon: <Package className="text-primary-500" />, color: "bg-primary-50" },
-          { title: "Messages", value: userConversations.length, icon: <MessageSquare className="text-green-500" />, color: "bg-green-50" },
-          { title: "Kg transportés", value: "45", icon: <Calendar className="text-purple-500" />, color: "bg-purple-50" },
+          { 
+            title: "Mes trajets", 
+            value: userTrips.length, 
+            icon: <Plane className="text-secondary-500" />, 
+            color: "bg-secondary-50",
+            link: "/search"
+          },
+          { 
+            title: "Mes réservations", 
+            value: userBookings.length, 
+            icon: <Package className="text-primary-500" />, 
+            color: "bg-primary-50",
+            link: "#bookings"
+          },
+          { 
+            title: "Messages", 
+            value: userConversations.length, 
+            icon: <MessageSquare className="text-green-500" />, 
+            color: "bg-green-50",
+            link: "/chat"
+          },
+          { 
+            title: "Kg transportés", 
+            value: `${totalWeightTransported.toFixed(1)}`, 
+            icon: <Calendar className="text-purple-500" />, 
+            color: "bg-purple-50",
+            link: "#"
+          },
         ].map((stat, index) => (
-          <div key={index} className={`card flex items-center p-4 ${stat.color}`}>
+          <Link 
+            key={index} 
+            to={stat.link}
+            className={`card flex items-center p-4 transition-transform hover:-translate-y-1 ${stat.color}`}
+          >
             <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
               {stat.icon}
             </div>
@@ -45,7 +78,7 @@ const DashboardPage: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">{stat.title}</p>
               <p className="text-2xl font-bold">{stat.value}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
       
@@ -80,8 +113,8 @@ const DashboardPage: React.FC = () => {
             {userTrips.length > 0 ? (
               <div className="space-y-4">
                 {userTrips.map(trip => (
-                  <div key={trip.id} className="card overflow-hidden">
-                    <div className="flex flex-col sm:flex-row">
+                  <div key={trip.id} className="card overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                    <div className="flex flex-col lg:flex-row">
                       <div className="flex-grow p-4 sm:p-6">
                         <div className="mb-4 flex items-start gap-4">
                           <div className="flex-shrink-0">
@@ -89,7 +122,7 @@ const DashboardPage: React.FC = () => {
                               <Plane size={20} />
                             </div>
                           </div>
-                          <div>
+                          <div className="flex-grow">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">{trip.from}</span>
                               <ChevronRight size={16} className="text-gray-400" />
@@ -113,7 +146,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                         <p className="text-sm text-gray-600">{trip.description}</p>
                       </div>
-                      <div className="flex items-center justify-around border-t bg-gray-50 p-4 sm:w-48 sm:flex-col sm:justify-center sm:border-l sm:border-t-0">
+                      <div className="flex items-center justify-around border-t bg-gray-50 p-4 lg:w-48 lg:flex-col lg:justify-center lg:border-l lg:border-t-0">
                         <Link 
                           to={`/trip/${trip.id}`} 
                           className="btn-sm btn-primary"
@@ -151,8 +184,8 @@ const DashboardPage: React.FC = () => {
                   const traveler = mockUsers.find(u => u.id === trip?.userId);
                   
                   return trip && traveler ? (
-                    <div key={booking.id} className="card overflow-hidden">
-                      <div className="flex flex-col sm:flex-row">
+                    <div key={booking.id} className="card overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex flex-col lg:flex-row">
                         <div className="flex-grow p-4 sm:p-6">
                           <div className="mb-4 flex items-start gap-4">
                             <img 
@@ -160,7 +193,7 @@ const DashboardPage: React.FC = () => {
                               alt={traveler.name}
                               className="h-10 w-10 rounded-full object-cover" 
                             />
-                            <div>
+                            <div className="flex-grow">
                               <div className="font-semibold">{traveler.name}</div>
                               <div className="flex items-center gap-2">
                                 <span>{trip.from}</span>
@@ -176,10 +209,17 @@ const DashboardPage: React.FC = () => {
                                     ? 'bg-green-100 text-green-800' 
                                     : booking.status === 'pending'
                                     ? 'bg-yellow-100 text-yellow-800'
+                                    : booking.status === 'delivered'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : booking.status === 'in_transit'
+                                    ? 'bg-purple-100 text-purple-800'
                                     : 'bg-red-100 text-red-800'
                                 }`}>
                                   <Check size={14} /> 
-                                  {booking.status === 'confirmed' ? 'Confirmé' : booking.status === 'pending' ? 'En attente' : 'Annulé'}
+                                  {booking.status === 'confirmed' ? 'Confirmé' : 
+                                   booking.status === 'pending' ? 'En attente' : 
+                                   booking.status === 'delivered' ? 'Livré' :
+                                   booking.status === 'in_transit' ? 'En transit' : 'Annulé'}
                                 </span>
                                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
                                   <Package size={14} /> {booking.packageWeight} kg
@@ -191,8 +231,13 @@ const DashboardPage: React.FC = () => {
                             </div>
                           </div>
                           <p className="text-sm text-gray-600">{booking.packageDescription}</p>
+                          {booking.trackingNumber && (
+                            <p className="mt-2 text-xs text-gray-500">
+                              Numéro de suivi: <span className="font-mono">{booking.trackingNumber}</span>
+                            </p>
+                          )}
                         </div>
-                        <div className="flex items-center justify-around border-t bg-gray-50 p-4 sm:w-48 sm:flex-col sm:justify-center sm:border-l sm:border-t-0">
+                        <div className="flex items-center justify-around border-t bg-gray-50 p-4 lg:w-48 lg:flex-col lg:justify-center lg:border-l lg:border-t-0">
                           <Link 
                             to={`/booking/${booking.id}`} 
                             className="btn-sm btn-primary"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Calendar, Package, Filter, ChevronDown, ChevronRight, ArrowRight, Plane, User, X, Star, DollarSign } from 'lucide-react';
+import { Search, MapPin, Calendar, Package, Filter, ChevronDown, ChevronRight, ArrowRight, Plane, User, X, Star, DollarSign, Clock } from 'lucide-react';
 import { mockTrips, mockUsers } from '../data/mockData';
 import { format } from 'date-fns';
 
@@ -16,6 +16,7 @@ const SearchPage: React.FC = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50]);
   const [weightRange, setWeightRange] = useState<[number, number]>([0, 50]);
+  const [sortBy, setSortBy] = useState<'date' | 'price' | 'weight' | 'rating'>('date');
   const [filteredTrips, setFilteredTrips] = useState<TripWithUser[]>([]);
   
   // Generate trips with user data
@@ -24,7 +25,7 @@ const SearchPage: React.FC = () => {
     user: mockUsers.find(user => user.id === trip.userId) || mockUsers[0]
   }));
   
-  // Apply filters
+  // Apply filters and sorting
   useEffect(() => {
     let results = tripsWithUsers;
     
@@ -58,8 +59,23 @@ const SearchPage: React.FC = () => {
       item.trip.availableWeight >= weightRange[0] && item.trip.availableWeight <= weightRange[1]
     );
     
+    // Apply sorting
+    results.sort((a, b) => {
+      switch (sortBy) {
+        case 'price':
+          return a.trip.pricePerKg - b.trip.pricePerKg;
+        case 'weight':
+          return b.trip.availableWeight - a.trip.availableWeight;
+        case 'rating':
+          return (b.user.rating || 0) - (a.user.rating || 0);
+        case 'date':
+        default:
+          return new Date(a.trip.departureDate).getTime() - new Date(b.trip.departureDate).getTime();
+      }
+    });
+    
     setFilteredTrips(results);
-  }, [fromLocation, toLocation, departureDate, priceRange, weightRange]);
+  }, [fromLocation, toLocation, departureDate, priceRange, weightRange, sortBy]);
   
   // Handle price range change
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,7 +104,16 @@ const SearchPage: React.FC = () => {
     setDepartureDate('');
     setPriceRange([0, 50]);
     setWeightRange([0, 50]);
+    setSortBy('date');
   };
+  
+  // Popular destinations for quick search
+  const popularDestinations = [
+    { from: 'Paris', to: 'Dakar', flag: '🇸🇳' },
+    { from: 'Bruxelles', to: 'Abidjan', flag: '🇨🇮' },
+    { from: 'Montréal', to: 'Casablanca', flag: '🇲🇦' },
+    { from: 'Londres', to: 'Accra', flag: '🇬🇭' },
+  ];
   
   return (
     <div className="page-transition">
@@ -97,8 +122,28 @@ const SearchPage: React.FC = () => {
         <p className="text-gray-600">Trouvez des voyageurs disponibles pour transporter vos colis.</p>
       </div>
       
+      {/* Quick destinations */}
+      <div className="mb-6">
+        <h3 className="mb-3 text-sm font-medium text-gray-700">Destinations populaires</h3>
+        <div className="flex flex-wrap gap-2">
+          {popularDestinations.map((dest, index) => (
+            <button
+              key={index}
+              className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm transition hover:border-primary-500 hover:bg-primary-50"
+              onClick={() => {
+                setFromLocation(dest.from);
+                setToLocation(dest.to);
+              }}
+            >
+              <span>{dest.flag}</span>
+              <span>{dest.from} → {dest.to}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      
       {/* Search Form */}
-      <div className="mb-8 rounded-xl bg-white p-6 shadow-md">
+      <div className="mb-8 rounded-xl bg-white p-4 shadow-md sm:p-6">
         <div className="grid gap-4 md:grid-cols-4">
           <div className="form-group">
             <label htmlFor="fromLocation" className="form-label">Départ</label>
@@ -157,7 +202,7 @@ const SearchPage: React.FC = () => {
               onClick={() => {}}
             >
               <Search size={18} />
-              Rechercher
+              <span className="hidden sm:inline">Rechercher</span>
             </button>
           </div>
         </div>
@@ -254,13 +299,17 @@ const SearchPage: React.FC = () => {
       
       {/* Results */}
       <div>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold">
             {filteredTrips.length} {filteredTrips.length === 1 ? 'résultat trouvé' : 'résultats trouvés'}
           </h2>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>Trier par:</span>
-            <select className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm">
+            <select 
+              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+            >
               <option value="date">Date (plus proche)</option>
               <option value="price">Prix (croissant)</option>
               <option value="weight">Poids disponible</option>
@@ -274,22 +323,22 @@ const SearchPage: React.FC = () => {
             filteredTrips.map(({ trip, user }) => (
               <div key={trip.id} className="card overflow-hidden transition-all duration-300 hover:-translate-y-1">
                 <div className="flex flex-col lg:flex-row">
-                  <div className="flex-grow p-6">
+                  <div className="flex-grow p-4 sm:p-6">
                     <div className="mb-4 flex items-center gap-3">
                       <img 
                         src={user.avatar} 
                         alt={user.name}
                         className="h-12 w-12 rounded-full object-cover" 
                       />
-                      <div>
+                      <div className="flex-grow">
                         <Link to={`/profile/${user.id}`} className="font-semibold hover:text-primary-500">{user.name}</Link>
                         <div className="flex items-center gap-1 text-sm text-yellow-500">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star 
                               key={i} 
                               size={14} 
-                              fill={i < Math.floor(user.rating) ? 'currentColor' : 'none'} 
-                              className={i < Math.floor(user.rating) ? 'text-yellow-500' : 'text-gray-300'} 
+                              fill={i < Math.floor(user.rating || 0) ? 'currentColor' : 'none'} 
+                              className={i < Math.floor(user.rating || 0) ? 'text-yellow-500' : 'text-gray-300'} 
                             />
                           ))}
                           <span className="ml-1 text-gray-700">{user.rating}</span>
@@ -298,8 +347,8 @@ const SearchPage: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col md:flex-row md:gap-12">
-                      <div className="mb-4 md:mb-0">
+                    <div className="flex flex-col lg:flex-row lg:gap-12">
+                      <div className="mb-4 lg:mb-0">
                         <div className="mb-3 flex items-center gap-2 text-lg font-medium">
                           <Plane size={18} className="text-secondary-500" />
                           <div className="flex items-center">
@@ -322,10 +371,16 @@ const SearchPage: React.FC = () => {
                             <DollarSign size={16} className="text-gray-400" />
                             <span>Prix: {trip.pricePerKg} {trip.currency}/kg</span>
                           </div>
+                          {trip.airline && trip.flightNumber && (
+                            <div className="flex items-center gap-2">
+                              <Clock size={16} className="text-gray-400" />
+                              <span>Vol {trip.airline} {trip.flightNumber}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
-                      <div className="md:border-l md:border-gray-200 md:pl-12">
+                      <div className="lg:border-l lg:border-gray-200 lg:pl-12">
                         <h4 className="mb-2 font-medium">Description</h4>
                         <p className="text-sm text-gray-600">{trip.description}</p>
                       </div>
@@ -353,7 +408,12 @@ const SearchPage: React.FC = () => {
             <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
               <Plane className="mx-auto mb-4 text-gray-400" size={48} />
               <h3 className="mb-2 text-lg font-medium">Aucun trajet trouvé</h3>
-              <p className="mb-4 text-gray-500">Essayez de modifier vos critères de recherche ou consultez plus tard.</p>
+              <p className="mb-4 text-gray-500">
+                {fromLocation || toLocation || departureDate 
+                  ? "Aucun trajet ne correspond à vos critères. Essayez de modifier votre recherche."
+                  : "Utilisez les filtres ci-dessus pour rechercher des trajets disponibles."
+                }
+              </p>
               <button 
                 className="btn-outline border-primary-500 text-primary-500"
                 onClick={clearFilters}
