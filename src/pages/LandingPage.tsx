@@ -116,7 +116,7 @@ const LandingPage: React.FC = () => {
           
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {popularDestinations.map((destination, index) => (
-              <Link to="/search" key={index} className="group overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <Link to="/search\" key={index} className="group overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                 <div className="relative h-48 overflow-hidden">
                   <img 
                     src={destination.image} 
